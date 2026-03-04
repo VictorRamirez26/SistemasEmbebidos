@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Control Arduino</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <h1>Panel de Control Arduino</h1>
+
+    <div class="card">
+        <h2>Control de Brillo</h2>
+
+        <label>LED 9</label>
+        <input type="range" id="l9" min="0" max="255">
+
+        <label>LED 10</label>
+        <input type="range" id="l10" min="0" max="255">
+
+        <label>LED 11</label>
+        <input type="range" id="l11" min="0" max="255">
+
+        <label>LED 13</label>
+        <select id="l13">
+            <option value="0">Apagado</option>
+            <option value="1">Encendido</option>
+        </select>
+
+        <button onclick="enviar()">Enviar Cambios</button>
+    </div>
+
+    <div class="card">
+        <h2>Estado Actual</h2>
+        <button onclick="actualizarEstado()">Actualizar</button>
+        <p id="estado">Sin datos</p>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
