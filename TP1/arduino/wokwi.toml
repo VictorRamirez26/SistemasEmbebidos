@@ -1,0 +1,4 @@
+[wokwi]
+version = 1
+firmware = 'build/tp1.ino.hex'
+rfc2217ServerPort = 4000
