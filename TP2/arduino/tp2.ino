@@ -4,47 +4,85 @@
 #define BTN_START 2
 #define BTN_STOP  3
 
-int lastValue = 0;
 volatile bool running = false;
+volatile bool alarm = false;
+
+int lastValue = 0;
+
 SemaphoreHandle_t mutex;
+SemaphoreHandle_t semStart;
+SemaphoreHandle_t semStop;
 
-void TaskButtons(void *pvParameters) {
-  pinMode(BTN_START, INPUT); // pull-down externo
-  pinMode(BTN_STOP, INPUT);
 
-  bool lastStartState = LOW;
-  bool lastStopState = LOW;
-
-  while (1) {
-    bool currentStart = digitalRead(BTN_START);
-    bool currentStop  = digitalRead(BTN_STOP);
-
-    // Detectar flanco de subida (LOW → HIGH)
-    if (currentStart == HIGH && lastStartState == LOW) {
-      running = true;
-    }
-
-    if (currentStop == HIGH && lastStopState == LOW) {
-      running = false;
-    }
-
-    lastStartState = currentStart;
-    lastStopState  = currentStop;
-
-    vTaskDelay(50 / portTICK_PERIOD_MS); // pequeño debounce
-  }
+void isrStart() {
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  xSemaphoreGiveFromISR(semStart, &xHigherPriorityTaskWoken);
+  if (xHigherPriorityTaskWoken) portYIELD_FROM_ISR();
 }
 
-void TaskSerialControl(void *pvParameters) {
+void isrStop() {
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  xSemaphoreGiveFromISR(semStop, &xHigherPriorityTaskWoken);
+  if (xHigherPriorityTaskWoken) portYIELD_FROM_ISR();
+}
+
+
+void TaskMain(void *pvParameters) {
   while (1) {
+
+    // Control por serial (UI)
     if (Serial.available()) {
       char cmd = Serial.read();
 
       if (cmd == '1') {
-        running = true;   // START
+        running = true;
       } 
       else if (cmd == '0') {
-        running = false;  // STOP
+        running = false;
+        alarm = false;
+      }
+    }
+
+    // Control por botones (interrupciones)
+    if (xSemaphoreTake(semStart, 0) == pdPASS) {
+      running = true;
+    }
+
+    if (xSemaphoreTake(semStop, 0) == pdPASS) {
+      running = false;
+      alarm = false;
+    }
+
+    // Lectura analógica
+    if (running) {
+      int value = analogRead(A3);
+
+      xSemaphoreTake(mutex, portMAX_DELAY);
+      lastValue = value;
+
+      if (value > 800) {
+        alarm = true;   // Queda activado
+      }
+
+      xSemaphoreGive(mutex);
+    }
+
+    // Serial output
+    if (running) {
+      static TickType_t lastPrint = 0;
+      if (xTaskGetTickCount() - lastPrint > pdMS_TO_TICKS(3000)) {
+
+        xSemaphoreTake(mutex, portMAX_DELAY);
+
+        Serial.print("L:");
+        Serial.print(lastValue);
+
+        Serial.print(",A:");
+        Serial.println(alarm ? 1 : 0);
+
+        xSemaphoreGive(mutex);
+
+        lastPrint = xTaskGetTickCount();
       }
     }
 
@@ -52,47 +90,34 @@ void TaskSerialControl(void *pvParameters) {
   }
 }
 
-void TaskAnalog(void *pvParameters) {
-  while (1) {
-
-    if (running) {
-      int value = analogRead(A3);
-
-      xSemaphoreTake(mutex, portMAX_DELAY);
-      lastValue = value;
-      xSemaphoreGive(mutex);
-    }
-
-    vTaskDelay(300 / portTICK_PERIOD_MS);
-  }
-}
-
-void TaskSerial(void *pvParameters) {
-  while (1) {
-    vTaskDelay(3000 / portTICK_PERIOD_MS);
-
-    if (running) {
-      xSemaphoreTake(mutex, portMAX_DELAY);
-
-      Serial.println(lastValue);
-
-      xSemaphoreGive(mutex);
-    }
-  }
-}
-
-void TaskBlink(void *pvParameters) {
+void TaskLeds(void *pvParameters) {
   pinMode(11, OUTPUT);
+  pinMode(12, OUTPUT);
 
   while (1) {
-    if (running) {
-      digitalWrite(11, HIGH);
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
+    bool localAlarm;
 
+    xSemaphoreTake(mutex, portMAX_DELAY);
+    localAlarm = alarm;
+    xSemaphoreGive(mutex);
+
+    if (running) {
+
+      digitalWrite(11, HIGH);
+      vTaskDelay(500 / portTICK_PERIOD_MS);
       digitalWrite(11, LOW);
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      vTaskDelay(500 / portTICK_PERIOD_MS);
+
+      if (localAlarm) {
+        digitalWrite(12, HIGH);
+        vTaskDelay(50 / portTICK_PERIOD_MS);
+        digitalWrite(12, LOW);
+        vTaskDelay(50 / portTICK_PERIOD_MS);
+      }
+
     } else {
-      digitalWrite(11, LOW); // asegurarse que esté apagado
+      digitalWrite(11, LOW);
+      digitalWrite(12, LOW);
       vTaskDelay(100 / portTICK_PERIOD_MS);
     }
   }
@@ -101,13 +126,21 @@ void TaskBlink(void *pvParameters) {
 void setup() {
   Serial.begin(9600);
 
-  mutex = xSemaphoreCreateMutex();
+  pinMode(13, OUTPUT);
+  digitalWrite(13, LOW);
 
-  xTaskCreate(TaskAnalog, "Analog", 128, NULL, 1, NULL);
-  xTaskCreate(TaskSerial, "Serial", 128, NULL, 1, NULL);
-  xTaskCreate(TaskButtons, "Buttons", 128, NULL, 1, NULL);
-  xTaskCreate(TaskSerialControl, "SerialCtrl", 128, NULL, 1, NULL);
-  xTaskCreate(TaskBlink, "Blink", 128, NULL, 1, NULL);
+  pinMode(BTN_START, INPUT);
+  pinMode(BTN_STOP, INPUT);
+
+  mutex = xSemaphoreCreateMutex();
+  semStart = xSemaphoreCreateBinary();
+  semStop  = xSemaphoreCreateBinary();
+
+  attachInterrupt(digitalPinToInterrupt(BTN_START), isrStart, FALLING);
+  attachInterrupt(digitalPinToInterrupt(BTN_STOP),  isrStop,  FALLING);
+
+  xTaskCreate(TaskMain, "Main", 128, NULL, 2, NULL);
+  xTaskCreate(TaskLeds, "Leds", 128, NULL, 1, NULL);
 }
 
 void loop() {}

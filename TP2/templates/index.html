@@ -5,64 +5,65 @@
     <title>Monitor de Luz</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
 
 <div class="container">
-    <h1>🌞 Intensidad Lumínica</h1>
+    <h1>🚨 Estado del Sistema</h1>
 
     <div class="card">
-        <p class="label">Valor actual</p>
+        <p class="label">Valor de lectura</p>
         <p id="valor">--</p>
     </div>
 
     <div id="estado" class="estado">Esperando datos...</div>
-</div>
 
-<div class="controls">
-    <button onclick="enviar('start')" class="btn start">▶ Iniciar</button>
-    <button onclick="enviar('stop')" class="btn stop">⏹ Detener</button>
+    <div class="controls">
+        <button onclick="enviar('start')" class="btn start">▶ Iniciar</button>
+        <button onclick="enviar('stop')" class="btn stop">⏹ Detener</button>
+    </div>
 </div>
 
 <script>
 async function actualizar() {
     try {
-        const res = await fetch("/luz");
+        const res = await fetch("/status");
         const data = await res.json();
 
-        const valor = data.luz;
-        document.getElementById("valor").innerText = valor;
+        const valor = Number(data.luz);
+        const alarm = Number(data.alarm);
 
-        let estadoTexto = "";
-        let clase = "";
+        // ===== VALOR =====
+        document.getElementById("valor").textContent = valor;
 
-        if (valor < 300) {
-            estadoTexto = "🌑 Baja luz";
-            clase = "bajo";
-        } else if (valor < 700) {
-            estadoTexto = "🌤 Luz media";
-            clase = "medio";
+        // ===== ALARMA =====
+        const estado = document.getElementById("estado");
+
+        if (alarm === 1) {
+            estado.textContent = "⚠️ ALARMA ACTIVA";
+            estado.className = "estado alto";
+            estado.style.border = "2px solid red";
         } else {
-            estadoTexto = "☀️ Alta luz";
-            clase = "alto";
+            estado.textContent = "✔️ ALARMA DESACTIVADA";
+            estado.className = "estado bajo";
+            estado.style.border = "none";
         }
 
-        const estado = document.getElementById("estado");
-        estado.innerText = estadoTexto;
-        estado.className = "estado " + clase;
-
-    } catch (error) {
-        console.error("Error:", error);
+    } catch (err) {
+        console.error("Error en /status:", err);
     }
-
 }
 
+// ===== ENVIAR COMANDOS =====
 async function enviar(accion) {
-try {
-    await fetch("/" + accion, { method: "POST" });
-} catch (error) {
-    console.error("Error:", error);
+    try {
+        await fetch("/" + accion, { method: "POST" });
+    } catch (err) {
+        console.error("Error comando:", err);
+    }
 }
-}
+
+// ===== LOOP =====
 setInterval(actualizar, 1000);
 actualizar();
 </script>
