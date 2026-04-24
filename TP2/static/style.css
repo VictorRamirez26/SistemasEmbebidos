@@ -1,0 +1,89 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 20px;
+}
+
+.card {
+    background: #1e293b;
+    padding: 20px 40px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.label {
+    font-size: 14px;
+    color: #94a3b8;
+}
+
+#valor {
+    font-size: 48px;
+    margin: 10px 0;
+}
+
+.estado {
+    font-size: 20px;
+    padding: 10px;
+    border-radius: 8px;
+    transition: 0.3s;
+}
+
+/* Estados dinámicos */
+.bajo {
+    background: #1e3a8a;
+}
+
+.medio {
+    background: #f59e0b;
+    color: #000;
+}
+
+.alto {
+    background: #ef4444;
+}
+
+.controls {
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 12px 24px;
+    font-size: 16px;
+    margin: 5px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+/* Botón iniciar */
+.start {
+    background: #22c55e;
+    color: white;
+}
+
+/* Botón detener */
+.stop {
+    background: #ef4444;
+    color: white;
+}
+
+/* Hover (esto le da calidad visual) */
+.btn:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}

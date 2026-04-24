@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Monitor de Luz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <h1>🌞 Intensidad Lumínica</h1>
+
+    <div class="card">
+        <p class="label">Valor actual</p>
+        <p id="valor">--</p>
+    </div>
+
+    <div id="estado" class="estado">Esperando datos...</div>
+</div>
+
+<div class="controls">
+    <button onclick="enviar('start')" class="btn start">▶ Iniciar</button>
+    <button onclick="enviar('stop')" class="btn stop">⏹ Detener</button>
+</div>
+
+<script>
+async function actualizar() {
+    try {
+        const res = await fetch("/luz");
+        const data = await res.json();
+
+        const valor = data.luz;
+        document.getElementById("valor").innerText = valor;
+
+        let estadoTexto = "";
+        let clase = "";
+
+        if (valor < 300) {
+            estadoTexto = "🌑 Baja luz";
+            clase = "bajo";
+        } else if (valor < 700) {
+            estadoTexto = "🌤 Luz media";
+            clase = "medio";
+        } else {
+            estadoTexto = "☀️ Alta luz";
+            clase = "alto";
+        }
+
+        const estado = document.getElementById("estado");
+        estado.innerText = estadoTexto;
+        estado.className = "estado " + clase;
+
+    } catch (error) {
+        console.error("Error:", error);
+    }
+
+}
+
+async function enviar(accion) {
+try {
+    await fetch("/" + accion, { method: "POST" });
+} catch (error) {
+    console.error("Error:", error);
+}
+}
+setInterval(actualizar, 1000);
+actualizar();
+</script>
+
+</body>
+</html>
