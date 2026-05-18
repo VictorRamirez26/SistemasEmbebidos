@@ -23,6 +23,8 @@ void interrupcionPin2();
 
 void interrupcionPin3();
 
+void leerEventos();
+
 void setup() {
 
   Serial.begin(9600);
@@ -95,6 +97,35 @@ void loop() {
   }
 }
 
+void leerEventos(){
+
+  int address = 2;
+
+
+  while (addr < proximaDireccion) {
+
+    unsigned long timestamp;
+
+    byte evento;
+
+    EEPROM.get(addr, timestamp);
+
+    evento = EEPROM.read(addr + 4);
+
+    Serial.print("EVENT:");
+
+    Serial.print(timestamp);
+
+    Serial.print(",");
+
+    Serial.println(evento);
+
+    addr += 5;
+  }
+
+  Serial.println("END_EVENTS");
+
+}
 
 void procesarMensaje(String msg) {
 
@@ -112,8 +143,9 @@ void procesarMensaje(String msg) {
     Serial.print("TIME:");
 
     Serial.println(unixTime);
-  } else {
-
+  } else if (msg == "GETEVENT") {
+    leerEventos();
+  }else
     Serial.println("ERROR_UNKNOWN_COMMAND");
   }
 }
