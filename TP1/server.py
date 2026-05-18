@@ -4,7 +4,8 @@ import time
 
 app = Flask(__name__)
 
-arduino = serial.Serial('/dev/ttyACM0', 9600)
+arduino = serial.serial_for_url("rfc2217://localhost:4000", 9600) # simulador
+#arduino = serial.Serial('/dev/ttyACM0', 9600)
 time.sleep(2)
 
 def enviar_comando(cmd):
