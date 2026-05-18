@@ -5,6 +5,7 @@ last_alarm = 0
 
 # --- Serial ---
 arduino = serial.serial_for_url("rfc2217://localhost:4000", 9600) # simulador
+# arduino = serial.Serial('COM11', 9600)
 last_value = 0
 
 def read_serial():
@@ -59,4 +60,4 @@ if __name__ == "__main__":
     thread.daemon = True
     thread.start()
 
-    app.run(debug=True)
+    app.run(debug=False)
