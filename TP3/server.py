@@ -5,9 +5,10 @@ import time
 
 app = Flask(__name__)
 
-arduino = serial.serial_for_url("rfc2217://localhost:4000", 9600) 
+# arduino = serial.serial_for_url("rfc2217://localhost:4000", 9600)
+arduino = serial.Serial('COM7', 9600)
 
-time.sleep(2)
+time.sleep(3)
 
 
 def obtener_hora_ntp():
@@ -29,7 +30,10 @@ def actualizar_hora_arduino():
 
     respuesta = arduino.readline().decode().strip()
 
+    print(respuesta)
+
     return timestamp
+
 
 def obtener_hora_arduino():
 
@@ -44,6 +48,42 @@ def obtener_hora_arduino():
         return timestamp
 
     return None
+
+
+def obtener_eventos():
+
+    arduino.write(b"GETEVENT\n")
+
+    eventos = []
+
+    while True:
+
+        linea = arduino.readline().decode().strip()
+
+        print(linea)
+
+        if linea == "END_EVENTS":
+            break
+
+        if linea.startswith("EVENT:"):
+
+            datos = linea[6:]
+
+            timestamp_str, evento_str = datos.split(",")
+
+            timestamp = int(timestamp_str)
+
+            evento = int(evento_str)
+
+            fecha = time.ctime(timestamp)
+
+            eventos.append({
+                "timestamp": timestamp,
+                "fecha": fecha,
+                "evento": evento
+            })
+
+    return eventos
 
 
 @app.route('/')
@@ -78,6 +118,14 @@ def hora():
     })
 
 
+@app.route('/eventos')
+def eventos():
+
+    lista_eventos = obtener_eventos()
+
+    return jsonify(lista_eventos)
+
+
 if __name__ == '__main__':
 
-    app.run(debug=True)
+    app.run(debug=False)

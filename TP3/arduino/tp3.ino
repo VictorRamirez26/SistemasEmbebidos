@@ -10,10 +10,13 @@ String buffer = "";
 volatile bool eventoPin2 = false;
 volatile bool eventoPin3 = false;
 
-// byte 0 y 1:
+volatile unsigned long ultimoRebotePin2 = 0;
+volatile unsigned long ultimoRebotePin3 = 0;
+
+// bytes 0 y 1:
 // guardan la próxima dirección libre
 
-int proximaDireccion = 2;
+uint16_t proximaDireccion = 2;
 
 void procesarMensaje(String msg);
 
@@ -24,6 +27,8 @@ void interrupcionPin2();
 void interrupcionPin3();
 
 void leerEventos();
+
+void limpiarEEPROM();
 
 void setup() {
 
@@ -44,12 +49,14 @@ void setup() {
     FALLING
   );
 
-  // Recuperar puntero eeprom
-
+  // Recupero puntero eeprom
   EEPROM.get(0, proximaDireccion);
 
-  // EEPROM vacía
-  if (proximaDireccion == 65535) {
+  // validar puntero
+  if (
+    proximaDireccion < 2 ||
+    proximaDireccion > EEPROM.length()
+  ) {
 
     proximaDireccion = 2;
   }
@@ -59,11 +66,12 @@ void setup() {
 
 void loop() {
 
+  // Unix
   if (millis() - ultimoIncremento >= 1000) {
 
     unixTime++;
 
-    ultimoIncremento = millis();
+    ultimoIncremento += 1000;
   }
 
   while (Serial.available()) {
@@ -97,20 +105,25 @@ void loop() {
   }
 }
 
-void leerEventos(){
+
+void leerEventos() {
 
   int address = 2;
 
-
-  while (addr < proximaDireccion) {
+  while (address + 5 <= proximaDireccion) {
 
     unsigned long timestamp;
 
     byte evento;
 
-    EEPROM.get(addr, timestamp);
+    EEPROM.get(address, timestamp);
 
-    evento = EEPROM.read(addr + 4);
+    evento = EEPROM.read(address + 4);
+
+    // validar evento
+    if (evento != 2 && evento != 3) {
+      break;
+    }
 
     Serial.print("EVENT:");
 
@@ -120,11 +133,24 @@ void leerEventos(){
 
     Serial.println(evento);
 
-    addr += 5;
+    address += 5;
   }
 
   Serial.println("END_EVENTS");
+}
 
+void limpiarEEPROM() {
+
+  for (int i = 0; i < EEPROM.length(); i++) {
+
+    EEPROM.write(i, 0xFF);
+  }
+
+  proximaDireccion = 2;
+
+  EEPROM.put(0, proximaDireccion);
+
+  Serial.println("EEPROM_CLEARED");
 }
 
 void procesarMensaje(String msg) {
@@ -138,27 +164,40 @@ void procesarMensaje(String msg) {
     unixTime = valor.toInt();
 
     Serial.println("OK_TIME_UPDATED");
-  } else if (msg == "GETTIME") {
+  }
+
+  else if (msg == "GETTIME") {
 
     Serial.print("TIME:");
 
     Serial.println(unixTime);
-  } else if (msg == "GETEVENT") {
+  }
+
+  else if (msg == "GETEVENT") {
+
     leerEventos();
-  }else
+  }
+
+  else if (msg == "CLEAREEPROM") {
+
+    limpiarEEPROM();
+  }
+
+  else {
+
     Serial.println("ERROR_UNKNOWN_COMMAND");
   }
 }
 
 void guardarEvento(byte evento) {
 
+  // verificar espacio
   if (proximaDireccion + 5 >= EEPROM.length()) {
 
     Serial.println("EEPROM_FULL");
 
     return;
   }
-
 
   EEPROM.put(proximaDireccion, unixTime);
 
@@ -169,19 +208,34 @@ void guardarEvento(byte evento) {
 
   proximaDireccion += 5;
 
+  // guardar nuevo puntero
   EEPROM.put(0, proximaDireccion);
 
-
-  Serial.print("EVENTO_GUARDADO en EEPROM: ");
-  Serial.println(proximaDireccion);
+  Serial.println("EVENT_SAVED");
 }
 
 void interrupcionPin2() {
 
-  eventoPin2 = true;
+  unsigned long ahora = millis();
+
+  // debounce
+  if (ahora - ultimoRebotePin2 > 200) {
+
+    eventoPin2 = true;
+
+    ultimoRebotePin2 = ahora;
+  }
 }
 
 void interrupcionPin3() {
 
-  eventoPin3 = true;
+  unsigned long ahora = millis();
+
+  // debounce
+  if (ahora - ultimoRebotePin3 > 200) {
+
+    eventoPin3 = true;
+
+    ultimoRebotePin3 = ahora;
+  }
 }

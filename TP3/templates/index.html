@@ -1,35 +1,28 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-
-<head>
-
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
 
     <title>Reloj NTP</title>
 
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
 
-</head>
-
-<body>
-
+  <body>
     <div class="container">
+      <h1>Reloj Unix Arduino</h1>
 
-        <h1>Reloj Unix Arduino</h1>
+      <div class="reloj">
+        <p id="fecha">Sin datos</p>
+      </div>
 
-        <div class="reloj">
+      <button id="btnActualizar">Actualizar hora desde servidor NTP</button>
 
-            <p id="fecha">Sin datos</p>
+      <button id="btnEventos">Obtener eventos EEPROM</button>
 
-        </div>
-
-        <button id="btnActualizar">
-            Actualizar hora desde servidor NTP
-        </button>
-
+      <div id="eventos"></div>
     </div>
 
     <script src="/static/script.js"></script>
-
-</body>
+  </body>
 </html>
