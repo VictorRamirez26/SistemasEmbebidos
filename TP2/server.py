@@ -4,8 +4,8 @@ from flask import Flask, jsonify , render_template
 last_alarm = 0
 
 # --- Serial ---
-arduino = serial.serial_for_url("rfc2217://localhost:4000", 9600) # simulador
-# arduino = serial.Serial('COM11', 9600)
+#arduino = serial.serial_for_url("rfc2217://localhost:4000", 9600) # simulador
+arduino = serial.Serial('COM7', 9600)
 last_value = 0
 
 def read_serial():

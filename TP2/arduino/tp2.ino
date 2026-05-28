@@ -29,93 +29,99 @@ void isrStop() {
 
 void TaskMain(void *pvParameters) {
 
-  // Control por serial (UI)
-  if (Serial.available()) {
-    char cmd = Serial.read();
+  while (1){
+    // Control por serial (UI)
+    if (Serial.available()) {
+      char cmd = Serial.read();
 
-    if (cmd == '1') {
+      if (cmd == '1') {
+        running = true;
+      } 
+      else if (cmd == '0') {
+        running = false;
+        alarm = false;
+      }
+    }
+
+    // Control por botones (interrupciones)
+    if (xSemaphoreTake(semStart, 0) == pdPASS) {
       running = true;
-    } 
-    else if (cmd == '0') {
+    }
+
+    if (xSemaphoreTake(semStop, 0) == pdPASS) {
       running = false;
       alarm = false;
     }
-  }
 
-  // Control por botones (interrupciones)
-  if (xSemaphoreTake(semStart, 0) == pdPASS) {
-    running = true;
-  }
-
-  if (xSemaphoreTake(semStop, 0) == pdPASS) {
-    running = false;
-    alarm = false;
-  }
-
-  // Lectura analógica
-  if (running) {
-    int value = analogRead(A3);
-
-    xSemaphoreTake(mutex, portMAX_DELAY);
-    lastValue = value;
-
-    if (value > 800) {
-      alarm = true;   // Queda activado
-    }
-
-    xSemaphoreGive(mutex);
-  }
-
-  // Serial output
-  if (running) {
-    static TickType_t lastPrint = 0;
-    if (xTaskGetTickCount() - lastPrint > pdMS_TO_TICKS(3000)) {
+    // Lectura analógica
+    if (running) {
+      int value = analogRead(A3);
 
       xSemaphoreTake(mutex, portMAX_DELAY);
+      lastValue = value;
 
-      Serial.print("L:");
-      Serial.print(lastValue);
-
-      Serial.print(",A:");
-      Serial.println(alarm ? 1 : 0);
+      if (value > 800) {
+        alarm = true;   // Queda activado
+      }
 
       xSemaphoreGive(mutex);
-
-      lastPrint = xTaskGetTickCount();
     }
-  }
 
-  vTaskDelay(50 / portTICK_PERIOD_MS);
+    // Serial output
+    if (running) {
+      static TickType_t lastPrint = 0;
+      if (xTaskGetTickCount() - lastPrint > pdMS_TO_TICKS(3000)) {
+
+        xSemaphoreTake(mutex, portMAX_DELAY);
+
+        Serial.print("L:");
+        Serial.print(lastValue);
+
+        Serial.print(",A:");
+        Serial.println(alarm ? 1 : 0);
+
+        xSemaphoreGive(mutex);
+
+        lastPrint = xTaskGetTickCount();
+      }
+    }
+
+    vTaskDelay(50 / portTICK_PERIOD_MS);
+
+  }
+  
 }
 
 void TaskLeds(void *pvParameters) {
   pinMode(11, OUTPUT);
   pinMode(12, OUTPUT);
 
-  bool localAlarm;
+  while (1){
+    bool localAlarm;
 
-  xSemaphoreTake(mutex, portMAX_DELAY);
-  localAlarm = alarm;
-  xSemaphoreGive(mutex);
+    xSemaphoreTake(mutex, portMAX_DELAY);
+    localAlarm = alarm;
+    xSemaphoreGive(mutex);
 
-  if (running) {
+    if (running) {
 
-    digitalWrite(11, HIGH);
-    vTaskDelay(500 / portTICK_PERIOD_MS);
-    digitalWrite(11, LOW);
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+      digitalWrite(11, HIGH);
+      vTaskDelay(500 / portTICK_PERIOD_MS);
+      digitalWrite(11, LOW);
+      vTaskDelay(500 / portTICK_PERIOD_MS);
 
-    if (localAlarm) {
-      digitalWrite(12, HIGH);
-      vTaskDelay(50 / portTICK_PERIOD_MS);
+      if (localAlarm) {
+        digitalWrite(12, HIGH);
+        vTaskDelay(50 / portTICK_PERIOD_MS);
+        digitalWrite(12, LOW);
+        vTaskDelay(50 / portTICK_PERIOD_MS);
+      }
+
+    } else {
+      digitalWrite(11, LOW);
       digitalWrite(12, LOW);
-      vTaskDelay(50 / portTICK_PERIOD_MS);
-    }
-
-  } else {
-    digitalWrite(11, LOW);
-    digitalWrite(12, LOW);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+      vTaskDelay(100 / portTICK_PERIOD_MS);
+    }  
   }
   
 }
