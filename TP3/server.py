@@ -6,8 +6,8 @@ import time
 app = Flask(__name__)
 
 # arduino = serial.serial_for_url("rfc2217://localhost:4000", 9600)
-arduino = serial.Serial('COM7', 9600)
-
+# arduino = serial.Serial('COM7', 9600)
+arduino = serial.Serial('/dev/ttyUSB1', 9600)
 time.sleep(3)
 
 
@@ -125,6 +125,11 @@ def eventos():
 
     return jsonify(lista_eventos)
 
+@app.route('/borrar-eventos', methods=['POST'])
+def borrar_eventos():
+    arduino.write(b"CLEAREEPROM\n")  
+    respuesta = arduino.readline().decode().strip()  
+    return jsonify({"respuesta": respuesta})
 
 if __name__ == '__main__':
 
