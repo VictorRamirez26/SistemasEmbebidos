@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nivel de Agua</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
+  </head>
+  <body>
+    <header>
+      <h1>💧 Nivel de Agua</h1>
+      <span class="badge" id="badge">DESCONECTADO</span>
+    </header>
+
+    <div class="grid">
+      <!-- Tanque -->
+      <div class="panel tank-panel">
+        <span class="panel-label">Tanque</span>
+        <div class="tank-wrap">
+          <div class="tank-fill" id="tankFill" style="height: 0%"></div>
+          <div
+            class="line-max"
+            id="lineMax"
+            style="bottom: 80%"
+            data-lbl="MAX"
+          ></div>
+          <div
+            class="line-min"
+            id="lineMin"
+            style="bottom: 20%"
+            data-lbl="MIN"
+          ></div>
+          <span class="tank-val" id="tankVal">– cm</span>
+        </div>
+        <div class="status-pill" id="statusPill">SIN DATOS</div>
+      </div>
+
+      <!-- Métricas -->
+      <div class="panel metrics-panel">
+        <div class="metric">
+          <span class="lbl">Nivel</span>
+          <span class="val" id="mLevel">–</span>
+          <span class="unit">cm</span>
+        </div>
+        <div class="metric">
+          <span class="lbl">Altura tanque</span>
+          <span class="val" id="mAlt">–</span>
+          <span class="unit">cm</span>
+        </div>
+        <div class="metric">
+          <span class="lbl">Mínimo</span>
+          <span class="val" id="mMin">–</span>
+          <span class="unit">cm</span>
+        </div>
+        <div class="metric">
+          <span class="lbl">Máximo</span>
+          <span class="val" id="mMax">–</span>
+          <span class="unit">cm</span>
+        </div>
+      </div>
+
+      <!-- Válvulas -->
+      <div class="panel valves-panel">
+        <div class="valve" id="vEntrada">
+          <div class="led"></div>
+          <span class="vlbl">Válvula<br />Entrada</span>
+        </div>
+        <div class="valve" id="vSalida">
+          <div class="led"></div>
+          <span class="vlbl">Válvula<br />Salida</span>
+        </div>
+        <div class="valve" id="vAlarma">
+          <div class="led"></div>
+          <span class="vlbl">Alarma</span>
+        </div>
+      </div>
+
+      <!-- Configuración -->
+      <div class="panel config-panel">
+        <div class="panel-label">Configuración</div>
+        <div class="config-form">
+          <div class="field">
+            <label for="inputMin">Nivel mínimo (cm)</label>
+            <input type="number" id="inputMin" min="0" max="999" value="20" />
+          </div>
+          <div class="field">
+            <label for="inputMax">Nivel máximo (cm)</label>
+            <input type="number" id="inputMax" min="1" max="999" value="80" />
+          </div>
+          <div class="field">
+            <label for="inputAlt">Altura tanque (cm)</label>
+            <input type="number" id="inputAlt" min="1" max="999" value="100" />
+          </div>
+          <button class="btn" onclick="aplicarConfig()">Aplicar</button>
+        </div>
+      </div>
+
+      <!-- Gráfica -->
+      <div class="panel chart-panel">
+        <div class="panel-label">Historial — último minuto</div>
+        <canvas id="chart"></canvas>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+  </body>
+</html>
