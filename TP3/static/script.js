@@ -4,11 +4,26 @@ const btnActualizar = document.getElementById("btnActualizar");
 
 const btnEventos = document.getElementById("btnEventos");
 
+const btnBorrar = document.getElementById("btnBorrar");
+
 const eventosDiv = document.getElementById("eventos");
 
-// =======================================
-// ACTUALIZAR DESDE NTP
-// =======================================
+
+btnBorrar.addEventListener("click", async () => {
+  const confirmar = confirm(
+    "¿Seguro que deseas borrar todos los eventos guardados?"
+  );
+
+  if (!confirmar) return;
+
+  const response = await fetch("/borrar-eventos", {
+    method: "POST",
+  });
+
+  const data = await response.json();
+
+  eventosDiv.innerHTML = "<p>Memoria EEPROM vaciada</p>";
+});
 
 btnActualizar.addEventListener("click", async () => {
   const response = await fetch("/actualizar-hora");
@@ -18,9 +33,6 @@ btnActualizar.addEventListener("click", async () => {
   fecha.innerText = data.fecha;
 });
 
-// =======================================
-// OBTENER EVENTOS EEPROM
-// =======================================
 
 btnEventos.addEventListener("click", async () => {
   const response = await fetch("/eventos");
@@ -46,9 +58,6 @@ btnEventos.addEventListener("click", async () => {
   });
 });
 
-// =======================================
-// OBTENER HORA ACTUAL AUTOMATICAMENTE
-// =======================================
 
 async function obtenerHora() {
   const response = await fetch("/hora");
@@ -59,7 +68,7 @@ async function obtenerHora() {
 }
 
 // actualizar cada segundo
-setInterval(obtenerHora, 1000);
+setInterval(obtenerHora, 2000);
 
 // cargar inicialmente
 obtenerHora();
