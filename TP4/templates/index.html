@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TP4 - Contador de Personas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Contador de Personas</h1>
+            <p class="subtitle">TP4 - Sistema de Detección con Ultrasonido</p>
+        </header>
+
+        <div class="status-bar">
+            <div class="connection-status">
+                <span id="status-dot" class="dot desconectado"></span>
+                <span id="status-text">Desconectado</span>
+            </div>
+        </div>
+
+        <div class="cards">
+            <div class="card contador-card">
+                <h2>Personas Detectadas</h2>
+                <div class="value-container">
+                    <span id="contador" class="big-number">0</span>
+                </div>
+            </div>
+
+            <div class="card alarma-card">
+                <h2>Estado de Alarma</h2>
+                <div class="value-container">
+                    <span id="alarma-indicator" class="dot alarma-off"></span>
+                    <span id="alarma-text" class="status-text">Inactiva</span>
+                </div>
+            </div>
+
+            <div class="card deteccion-card">
+                <h2>Detección Actual</h2>
+                <div class="value-container">
+                    <span id="deteccion-indicator" class="dot deteccion-off"></span>
+                    <span id="deteccion-text" class="status-text">Sin presencia</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="event-flash" id="event-flash">
+            <span>+1 Persona Detectada</span>
+        </div>
+
+        <div class="actions">
+            <button id="btn-reset" class="btn btn-reset" onclick="resetContador()">
+                Resetear Contador
+            </button>
+            <button id="btn-reconectar" class="btn btn-reconnect" onclick="reconectar()">
+                Reconectar
+            </button>
+        </div>
+
+        <footer>
+            <p>Última actualización: <span id="timestamp">--</span></p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
