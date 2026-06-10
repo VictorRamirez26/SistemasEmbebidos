@@ -1,7 +1,5 @@
-// Altura del tanque actual (se actualiza desde /datos)
 let ALTURA = 100;
 
-// ── Polling ───────────────────────────────────────────────────────────────────
 async function fetchDatos() {
   try {
     const r = await fetch("/datos");
@@ -10,11 +8,9 @@ async function fetchDatos() {
   } catch (_) {}
 }
 
-// ── Render ────────────────────────────────────────────────────────────────────
 function render(d) {
   ALTURA = d.alt || 100;
 
-  // badge conexión — si llegaron datos, está conectado
   const badge = document.getElementById("badge");
   badge.textContent = "CONECTADO";
   badge.classList.add("on");
@@ -61,7 +57,6 @@ function setValve(id, cls, active) {
   el.className = "valve" + (active ? " " + cls : "");
 }
 
-// ── Configurar ────────────────────────────────────────────────────────────────
 async function aplicarConfig() {
   const min = document.getElementById("inputMin").value;
   const max = document.getElementById("inputMax").value;
@@ -97,11 +92,10 @@ async function aplicarConfig() {
   }
 }
 
-// ── Gráfica ───────────────────────────────────────────────────────────────────
 const history = [];
 
 function drawChart(currentLevel, min, max) {
-  // acumular historial (máx 60 puntos)
+  // acumular historial
   history.push(currentLevel);
   if (history.length > 60) history.shift();
 
@@ -177,7 +171,6 @@ function drawChart(currentLevel, min, max) {
   ctx.stroke();
 }
 
-// ── Toast ─────────────────────────────────────────────────────────────────────
 function showToast(msg, err = false) {
   const t = document.getElementById("toast");
   t.textContent = msg;
@@ -187,6 +180,5 @@ function showToast(msg, err = false) {
   setTimeout(() => t.classList.remove("show"), 2500);
 }
 
-// ── Arrancar ──────────────────────────────────────────────────────────────────
 setInterval(fetchDatos, 1000);
 fetchDatos();
